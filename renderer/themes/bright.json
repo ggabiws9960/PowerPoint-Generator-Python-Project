@@ -1,0 +1,13 @@
+{
+  "id": "bright",
+  "label": "Bright (아이보리 · 티일 · 코랄)",
+  "name": "Bright Deck",
+  "headFontFace": "Malgun Gothic",
+  "bodyFontFace": "Malgun Gothic",
+  "colors": {
+    "dk1": "1E2A32", "lt1": "FFFFFF", "dk2": "0F4C5C", "lt2": "F4F1EA",
+    "accent1": "028090", "accent2": "F9E795", "accent3": "F96167",
+    "accent4": "02C39A", "accent5": "7A8389", "accent6": "DDF3F2",
+    "hlink": "028090", "folHlink": "7A8389"
+  }
+}

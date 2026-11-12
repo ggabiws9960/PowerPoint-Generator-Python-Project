@@ -4,3 +4,9 @@ instance/site.db
 *.pyc
 .DS_Store
 __pycache__/
+venv/
+renderer/node_modules/
+renderer/out/
+renderer/assets/*.png
+myapp/generated/*
+!myapp/generated/.gitkeep

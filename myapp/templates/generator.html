@@ -2,32 +2,28 @@
 {% block content %}
 <div class="generate-showcase">
     <form id="generate-form" method="POST" action="{{ url_for('generate') }}">
-        <label class="text-for-info" for="presentation_title">What is the title for the presentation?</label>
+        <label class="text-for-info" for="presentation_title">덱 제목 / Title</label>
         <input type="text" id="presentation_title" name="presentation_title" required>
-        <label class="text-for-info" for="presenter_name">Presented by</label>
+        <label class="text-for-info" for="presenter_name">발표자 / Presented by</label>
         <input type="text" id="presenter_name" name="presenter_name" required>
-        <label class="text-for-info" for="number_of_slide">How many slides do you need?</label>
-        <input type="number" id="number_of_slide" name="number_of_slide" required>
+        <label class="text-for-info" for="date">날짜 (선택)</label>
+        <input type="text" id="date" name="date" placeholder="2026. 11. 13">
+        <label class="text-for-info" for="number_of_slide">장 수 (표지·마무리 포함, 3~30)</label>
+        <input type="number" id="number_of_slide" name="number_of_slide" min="3" max="30" value="8" required>
+        <label class="text-for-info" for="language">언어</label>
+        <input type="text" id="language" name="language" value="한국어">
 
-        <label id="enter-your-content" for="user_text">Enter your content</label>
+        <label id="enter-your-content" for="user_text">내용 — 주제, 말하고 싶은 것, 숫자, 결론을 적어 주세요</label>
         <textarea id="user_text" name="user_text" required></textarea>
 
-        <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="insert_image" name="insert_image">
-            <label class="form-check-label" for="insert_image">
-                Insert image automatically (this might insert irrelevant information)
-            </label>
-        </div>
-
         <div class="template-choice text-for-info">
-            Choose a template:
-            <input type="radio" id="simple" name="template_choice" value="simple">
-            <label for="simple">Simple</label>
-            <input type="radio" id="bright_modern" name="template_choice" value="bright_modern">
-            <label for="bright_modern">Bright Modern</label>
-            <input type="radio" id="dark_modern" name="template_choice" value="dark_modern">
-            <label for="dark_modern">Dark Modern</label>
+            테마:
+            {% for t in themes %}
+            <input type="radio" id="theme_{{ t.id }}" name="template_choice" value="{{ t.id }}" {% if loop.first %}checked{% endif %}>
+            <label for="theme_{{ t.id }}">{{ t.label }}</label>
+            {% endfor %}
         </div>
+        <p class="text-for-info" style="font-size: 0.85em; opacity: .7">모델: {{ model }} · 장마다 유형(표지·목차·섹션·글머리표·카드·숫자 타일·표·두 열·비교·단계·마무리)을 골라 구조화 명세(JSON)를 만들고, Node 렌더러가 테마를 입혀 PPTX 로 만듭니다.</p>
 
         <button id="generate-button" class="btn btn-primary" type="submit">Generate your presentation!</button>
     </form>
@@ -40,17 +36,14 @@
                 <div class="spinner"></div>
                 <p>Generating your presentation...</p>
               </div>
-              <div class="generated-header">
-                <div class="generated-header"><a href="{{ url_for('download_file', filename='generated_presentation.pptx') }}">Click to Download</a></div>
+              <div id="generated-result" class="generated-header" style="display:none">
+                <div class="generated-header"><a id="download-link" href="#">Click to Download</a></div>
+                <p id="result-meta" style="font-size:0.9em"></p>
+                <p><a id="spec-link" href="#" style="font-size:0.85em">명세 JSON 보기</a></p>
               </div>
+              <div id="generated-error" style="display:none; color:#c0392b"></div>
+              <p><a href="#" id="modal-close" style="font-size:0.85em">닫기</a></p>
           </div>
         </div>
     </div>
-
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 {% endblock content %}
-
-
-
-
-

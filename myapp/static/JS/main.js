@@ -1,48 +1,44 @@
-// Function to show the modal
-function showModal() {
-    var modal = document.getElementById('modal-generate');
-    modal.style.display = 'block';
-}
+// 생성 화면: 폼을 fetch 로 보내고, 서버의 JSON 응답으로 내려받기 링크를 보여 준다.
+function showModal() { document.getElementById('modal-generate').style.display = 'block'; }
+function hideModal() { document.getElementById('modal-generate').style.display = 'none'; }
 
-// Function to hide the modal
-function hideModal() {
-    var modal = document.getElementById('modal-generate');
-    modal.style.display = 'none';
-}
+document.addEventListener('DOMContentLoaded', function () {
+    const button = document.getElementById('generate-button');
+    if (!button) return;
+    const loading = document.getElementById('loading-indicator');
+    const result = document.getElementById('generated-result');
+    const error = document.getElementById('generated-error');
+    document.getElementById('modal-close').addEventListener('click', function (e) { e.preventDefault(); hideModal(); });
 
-// Event listener for the "Generate" button
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('generate-button').addEventListener('click', function(e) {
-        e.preventDefault();  // Prevent the default form submission
-        showModal();  // Show the modal
+    button.addEventListener('click', function (e) {
+        e.preventDefault();
+        const form = document.getElementById('generate-form');
+        if (!form.reportValidity()) return;
+        showModal();
+        loading.style.display = 'block';
+        result.style.display = 'none';
+        error.style.display = 'none';
+        button.disabled = true;
 
-
-        // Serialize form data and send it to the server via an AJAX POST request
-        const formData = new FormData();
-        formData.append('presentation_title', document.getElementById('presentation_title').value);
-        formData.append('presenter_name', document.getElementById('presenter_name').value);
-        formData.append('number_of_slide', document.getElementById('number_of_slide').value);
-        formData.append('user_text', document.getElementById('user_text').value);
-        formData.append('insert_image', document.getElementById('insert_image').checked);
-
-        const template_choice = document.querySelector('input[name="template_choice"]:checked').value;
-        formData.append('template_choice', template_choice);
-        // ... append other form data similarly
-        console.log([...formData]);  // Check the logged output to ensure the data is correct
-        fetch('/generator', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok ' + response.statusText);
-            }
-            return response.json();  // This assumes the server will return JSON
-        })
-        .catch(error => {
-            console.error('Error:', error);
-        });
+        const formData = new FormData(form);
+        fetch('/generator', { method: 'POST', body: formData })
+            .then(async (response) => {
+                const data = await response.json().catch(() => ({ ok: false, error: response.statusText }));
+                if (!response.ok || !data.ok) throw new Error(data.error || ('HTTP ' + response.status));
+                return data;
+            })
+            .then((data) => {
+                loading.style.display = 'none';
+                document.getElementById('download-link').href = data.download;
+                document.getElementById('spec-link').href = data.spec;
+                document.getElementById('result-meta').textContent = data.slides + '장 만들어졌습니다.';
+                result.style.display = 'block';
+            })
+            .catch((err) => {
+                loading.style.display = 'none';
+                error.textContent = '실패: ' + err.message;
+                error.style.display = 'block';
+            })
+            .finally(() => { button.disabled = false; });
     });
 });
-
-

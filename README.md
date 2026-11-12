@@ -7,6 +7,27 @@
 
 <img src="https://img.shields.io/github/stars/otahina/PowerPoint-Generator-Python-Project.svg"> <img src="https://img.shields.io/github/forks/otahina/PowerPoint-Generator-Python-Project.svg">
 
+## 이 포크에서 달라진 것 — 구조화 덱 방식 (2026-11)
+
+원본은 GPT-3.5 가 쓴 글을 python-pptx 템플릿의 제목·글머리표 자리에 그대로 채웠다. 이 포크는 생성 핵심을 바꿨다.
+
+1. **Claude 가 장별 구조화 명세(JSON)를 쓴다** — 장마다 유형(표지·목차·섹션·글머리표·카드·숫자 타일·표·두 열·비교·단계·마무리)을 고르고, 구조화 출력(`output_config.format`)으로 형식이 보장된 JSON 을 받는다. `myapp/utils/claude_generate.py`
+2. **Node 렌더러가 테마를 입혀 PPTX 를 만든다** — pptxgenjs 로 테마(12색 스킴·글꼴·로고) → 레이아웃(제목 자리·쪽 번호) → 장 유형별 카드·타일·표·차트를 그리고, 테마 색을 파일에 기록해 PowerPoint 의 「디자인 > 색 변형」으로 한 번에 바꿀 수 있게 한다. `renderer/build.js`, 테마 `renderer/themes/*.json`
+3. **렌더로 검사한다** — `renderer/preview.ps1`(Windows, PowerPoint) 이 장마다 PNG 를 뽑아 겹침·넘침을 눈으로 본다.
+
+Flask 화면·로그인은 그대로이고, `/generator` 는 JSON 으로 내려받기 링크를 돌려준다. 명세를 직접 써서 `/render` 로 보내면 모델 없이 렌더만 할 수도 있다. 명세 형식은 [docs/SPEC.md](docs/SPEC.md).
+
+```bash
+# 1) Node 렌더러
+cd renderer && npm install && node build.js examples/sample-ko.json out/sample-ko.pptx --theme climath && cd ..
+# 2) Python
+python -m venv venv && venv\Scripts\activate && pip install -r requirements.txt
+copy .env.example .env   # SECRET_KEY, ANTHROPIC_API_KEY 채우기
+cd myapp && python flaskapp.py   # http://localhost:5001/generator
+```
+
+---
+
 ## PowerPoint Generator: Your Gateway to Effortless Presentations 🚀
 
 Dive into the ease of presentation creation with PowerPoint Generator, a smart web application crafted to automate 
@@ -26,9 +47,9 @@ https://github.com/otahina/PowerPoint-Generator-Python-Project/assets/108225969/
 
 ## Features 
 
-* **🤖 AI-Driven Content Creation**: Utilize the power of GPT-3.5 Turbo to generate slide content based on user's input.
+* **🤖 AI-Driven Content Creation**: Claude writes a structured slide spec (JSON) — one message per slide, slide types chosen per content.
 * **😎 Intelligent Slide Generation**: The tool intelligently proposes titles and content for each slide.
-* **🎨 Customizable Themes**: Choose color themes for your presentation, giving it a personalized touch.
+* **🎨 Theme-driven rendering**: pptxgenjs renders cards, stat tiles, tables and charts with a 12-color PowerPoint theme (`renderer/themes/*.json`) — recolor the whole deck in PowerPoint afterwards.
 * **🙂 User-Friendly Interface**: Clear instructions and an intuitive design make the PowerPoint generation process seamless and straightforward.
 
 ## Inner Structure of the project 
@@ -238,29 +259,21 @@ I'll check your pull request. 😀
 
 If you want to learn more about how to contribute, visit [CONTRIBUTING.md](docs/CONTRIBUTING.md).
 
-## Setup the Secret Key and OpenAI Key 
+## Setup the Secret Key and Claude API Key
 
-The application uses a secret key for session management and an OpenAI key for the GPT-3.5 Turbo API.
-These keys are defined as environment variables, and you can easily set them up using the provided .env.example file.
+`.env.example` 을 `.env` 로 복사해 채운다.
 
-1. Locate the file named .env.example in the project directory.
-2. Copy the contents of .env.example into a new file named .env.
-3. Replace the placeholder values with your actual keys:
-   
 ```
 SECRET_KEY=your_secret_key
-OPENAI_KEY=your_openai_key
-PEXELS_API_KEY=your_pexels_key
+ANTHROPIC_API_KEY=your_anthropic_key
+CLAUDE_MODEL=claude-opus-5-5
 ```
 
-Here's a brief description of each key and how to obtain them:
+**SECRET_KEY**: 🔐 Flask 세션용 임의의 긴 문자열.
 
-**SECRET_KEY**: 🔐This is used for web application security such as session management. You can create your own secure, random string for this.
+**ANTHROPIC_API_KEY**: 🤖 https://platform.claude.com 에서 발급. 명세를 쓰는 모델은 `CLAUDE_MODEL` 로 바꾼다(기본 `claude-opus-5-5`).
 
-**OPENAI_KEY**: 🤖This is required to access the OPENAI API. Although there's a limitation with the free version, it's sufficient for trying out this web application on your local machine. You can obtain this key by creating an account on the https://platform.openai.com.
-
-**PEXELS_API_KEY**: 🏞️ This key is used for the free image search API provided by Pexels. It's very useful for adding creative images to your presentations. You can get this key by creating a free account on the https://www.pexels.com/api
-After registering, the API key is automatically generated for you.
+Pexels 키는 더 이상 쓰지 않는다(사진 삽입 기능 제거).
 
 ## Community Discussions 🗣️
 Have a question, idea, or want to contribute? Join us in [Discussions](https://github.com/otahina/PowerPoint-Generator-Python-Project/discussions)!
