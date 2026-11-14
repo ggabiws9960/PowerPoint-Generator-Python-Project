@@ -1,3 +1,5 @@
+> **2026-11 업데이트:** 아래 설명은 원본(GPT-3.5 + python-pptx) 흐름이다. 이 포크의 생성 흐름은 `myapp/utils/claude_generate.py`(Claude → JSON 명세) → `myapp/utils/render_pptx.py`(Node 호출) → `renderer/build.js`(pptxgenjs 렌더) 이며, 명세 형식은 [SPEC.md](SPEC.md) 에 있다.
+
 # Code Structure of the project
 
 ## Introduction

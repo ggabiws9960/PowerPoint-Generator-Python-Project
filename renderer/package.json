@@ -1,0 +1,19 @@
+{
+  "name": "deck-renderer",
+  "version": "0.1.0",
+  "description": "Structured deck renderer: JSON spec -> themed PPTX (pptxgenjs)",
+  "main": "build.js",
+  "type": "commonjs",
+  "scripts": {
+    "build": "node build.js examples/sample-ko.json out/sample-ko.pptx",
+    "themes": "node build.js --list-themes"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "pptxgenjs": "^4.0.1",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-icons": "^5.7.0",
+    "sharp": "^0.35.5"
+  }
+}

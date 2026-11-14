@@ -1,0 +1,14 @@
+{
+  "id": "dark",
+  "label": "Dark (네이비 · 아이스 블루 · 앰버)",
+  "name": "Dark Deck",
+  "headFontFace": "Malgun Gothic",
+  "bodyFontFace": "Malgun Gothic",
+  "colors": {
+    "dk1": "0E1420", "lt1": "F7F8FB", "dk2": "1E2761", "lt2": "E6EBF5",
+    "accent1": "4F7CFF", "accent2": "CADCFC", "accent3": "FFB347",
+    "accent4": "34C7A4", "accent5": "8C93A6", "accent6": "E4EAFB",
+    "hlink": "4F7CFF", "folHlink": "8C93A6"
+  },
+  "darkContent": true
+}
