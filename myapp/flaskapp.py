@@ -22,6 +22,8 @@ db.init_app(app)
 # Configure Flask-Login
 login_manager = LoginManager()
 login_manager.login_view = "login"
+login_manager.login_message = "로그인이 필요한 화면입니다."
+login_manager.login_message_category = "info"
 login_manager.init_app(app)
 
 
@@ -39,7 +41,7 @@ def home():
 @app.route('/profile')
 @login_required
 def profile():
-    return render_template('profile.html')
+    return render_template('profile.html', title='내 정보')
 
 
 @app.route("/register", methods=['GET', 'POST'])
@@ -51,9 +53,9 @@ def register():
         db.session.add(user)
         db.session.commit()
         login_user(user, remember=True)
-        flash('Your account has been created! You are now able to log in', 'success')
-        return redirect(url_for('login'))
-    return render_template('register.html', title='Register', form=form, user=current_user)
+        flash('가입했습니다. 이제 덱을 만들어 보세요.', 'success')
+        return redirect(url_for('generate'))
+    return render_template('register.html', title='회원가입', form=form, user=current_user)
 
 
 @app.route("/login", methods=['GET', 'POST'])
@@ -69,8 +71,8 @@ def login():
             login_user(user, remember=form.remember.data)
             return redirect(url_for('home'))
         else:
-            flash('Login Unsuccessful. Please check email and password', 'danger')
-    return render_template('login.html', title='Login', form=form, user=current_user)
+            flash('이메일 또는 비밀번호가 맞지 않습니다.', 'danger')
+    return render_template('login.html', title='로그인', form=form, user=current_user)
 
 
 
@@ -108,7 +110,7 @@ def generate():
         return jsonify({'ok': True, 'download': url_for('download_file', filename=result['file']),
                         'spec': url_for('download_file', filename=result['json']), 'slides': result['slides']})
 
-    return render_template('generator.html', title='Generate', themes=list_themes(), model=CLAUDE_MODEL)
+    return render_template('generator.html', title='덱 만들기', themes=list_themes(), model=CLAUDE_MODEL)
 
 
 @app.route('/render', methods=['POST'])

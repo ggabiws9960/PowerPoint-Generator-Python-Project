@@ -15,7 +15,7 @@
 2. **Node 렌더러가 테마를 입혀 PPTX 를 만든다** — pptxgenjs 로 테마(12색 스킴·글꼴·로고) → 레이아웃(제목 자리·쪽 번호) → 장 유형별 카드·타일·표·차트를 그리고, 테마 색을 파일에 기록해 PowerPoint 의 「디자인 > 색 변형」으로 한 번에 바꿀 수 있게 한다. `renderer/build.js`, 테마 `renderer/themes/*.json`
 3. **렌더로 검사한다** — `renderer/preview.ps1`(Windows, PowerPoint) 이 장마다 PNG 를 뽑아 겹침·넘침을 눈으로 본다.
 
-Flask 화면·로그인은 그대로이고, `/generator` 는 JSON 으로 내려받기 링크를 돌려준다. 명세를 직접 써서 `/render` 로 보내면 모델 없이 렌더만 할 수도 있다. 명세 형식은 [docs/SPEC.md](docs/SPEC.md).
+화면은 볼트의 **디자인 3번(Wise)** — 세이지 바탕·흰 카드·라임 버튼·Pretendard 900 제목 — 으로 한글화했다(`myapp/static/CSS/wise.css`, 색은 `--w-` 변수로만). Flask 로그인은 그대로이고, `/generator` 는 JSON 으로 내려받기 링크를 돌려준다. 명세를 직접 써서 `/render` 로 보내면 모델 없이 렌더만 할 수도 있다. 명세 형식은 [docs/SPEC.md](docs/SPEC.md).
 
 ```bash
 # 1) Node 렌더러

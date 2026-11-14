@@ -1,0 +1,7 @@
+{% macro field(f, placeholder='', autocomplete='') %}
+<div class="w-field">
+    {{ f.label(class="w-label") }}
+    {{ f(class="w-input" ~ (" is-invalid" if f.errors else ""), placeholder=placeholder, autocomplete=autocomplete) }}
+    {% for error in f.errors %}<span class="w-error">{{ error }}</span>{% endfor %}
+</div>
+{% endmacro %}

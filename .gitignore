@@ -10,3 +10,4 @@ renderer/out/
 renderer/assets/*.png
 myapp/generated/*
 !myapp/generated/.gitkeep
+.claude/

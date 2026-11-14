@@ -17,11 +17,13 @@ def node_bin() -> str:
 
 
 def list_themes() -> list[dict]:
-    """renderer/themes/*.json 의 {id, label} 목록."""
+    """renderer/themes/*.json 의 {id, label, swatch} 목록. swatch 는 화면에 보일 대표색 4개(#hex)."""
     out = []
     for f in sorted((RENDERER / "themes").glob("*.json")):
         t = json.loads(f.read_text(encoding="utf-8"))
-        out.append({"id": t["id"], "label": t.get("label", t["id"])})
+        c = t.get("colors", {})
+        swatch = ["#" + c[k] for k in ("dk2", "accent1", "accent2", "accent3") if c.get(k)]
+        out.append({"id": t["id"], "label": t.get("label", t["id"]), "swatch": swatch})
     return out
 
 
