@@ -181,6 +181,10 @@ a { color: var(--w-ink); }
 .w-result-icon svg { width: 28px; height: 28px; }
 .w-error-box { background: var(--w-negative-bg); color: var(--w-on-dark); border-radius: var(--w-radius-lg); padding: var(--w-space-md) var(--w-space-lg); text-align: left; font-size: 14px; word-break: break-word; }
 
+/* 진행 막대 — 진행은 상태가 아니라 행동 중이므로 먹색, 라임은 버튼 전용 */
+.w-progress { height: 10px; border-radius: var(--w-radius-pill); background: var(--w-canvas-soft); overflow: hidden; margin: var(--w-space-lg) 0 var(--w-space-sm); }
+.w-progress-bar { height: 100%; width: 3%; border-radius: var(--w-radius-pill); background: var(--w-ink); transition: width .4s ease; }
+
 /* ---- 인증·프로필 카드 ---- */
 .w-auth { max-width: 460px; margin: 0 auto; }
 .w-auth .w-card { padding: var(--w-space-2xl); }

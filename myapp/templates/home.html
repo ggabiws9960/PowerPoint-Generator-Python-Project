@@ -19,11 +19,11 @@
             <div class="w-row">
                 <div class="w-field">
                     <label class="w-label" for="quick_n">장 수</label>
-                    <input class="w-input" type="number" id="quick_n" name="n" min="3" max="30" value="8">
+                    <input class="w-input" type="number" id="quick_n" name="n" min="3" max="150" value="8">
                 </div>
                 <div class="w-field">
                     <span class="w-label">걸리는 시간</span>
-                    <div class="w-input" style="border-color: transparent; background: var(--w-canvas-soft)">1분 안팎</div>
+                    <div class="w-input" style="border-color: transparent; background: var(--w-canvas-soft)">10장 1분 · 100장 몇 분</div>
                 </div>
             </div>
             <button class="w-btn w-btn--primary w-btn--block" type="submit">이어서 만들기</button>
@@ -62,7 +62,7 @@
         <ol class="w-steps">
             <li><strong>내용 적기</strong><span>주제, 꼭 들어갈 숫자, 결론을 편하게 적습니다. 길어도 괜찮습니다.</span></li>
             <li><strong>장 수와 테마 고르기</strong><span>표지와 마무리를 포함한 장 수를 정하고 테마를 고릅니다.</span></li>
-            <li><strong>만들기</strong><span>Claude가 구성을 짜고 렌더러가 파일을 만듭니다. 1분 안팎이 걸립니다.</span></li>
+            <li><strong>만들기</strong><span>큰 덱은 개요를 먼저 짜고 10장씩 나눠 동시에 씁니다. 진행률이 화면에 보입니다.</span></li>
             <li><strong>내려받아 다듬기</strong><span>받은 PPTX를 열어 필요한 곳만 고칩니다. 발표자 노트도 들어 있습니다.</span></li>
         </ol>
         <div class="w-card w-card--dark w-cta">

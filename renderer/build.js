@@ -91,6 +91,13 @@ async function build(spec, theme, outFile) {
   function bulletRuns(lines, opt = {}) {
     return lines.map((t, k) => ({ text: t, options: { bullet: true, breakLine: k < lines.length - 1, paraSpaceAfter: opt.gap ?? 8 } }));
   }
+  // 글머리표 글자 크기 — 줄 수와 글자 수가 많으면 줄인다 ("자세히" 분량 대비). 옆 강조 카드가 있으면 폭이 좁다.
+  function bulletSize(lines, narrow) {
+    const chars = lines.reduce((n, t) => n + String(t).length, 0) * (narrow ? 1.5 : 1);
+    if (lines.length > 7 || chars > 330) return 14;
+    if (lines.length > 5 || chars > 230) return 16;
+    return 18;
+  }
   function deco(s, x, y) {
     s.addShape(pres.ShapeType.roundRect, { x, y, w: 2.3, h: 2.3, fill: { color: H.accent1 }, line: { color: H.accent1, width: 0 }, rectRadius: 0.3, rotate: 12, objectName: "장식 1" });
     s.addShape(pres.ShapeType.roundRect, { x: x + 0.8, y: y + 0.7, w: 1.5, h: 1.5, fill: { color: H.accent2 }, line: { color: H.accent2, width: 0 }, rectRadius: 0.25, rotate: -8, objectName: "장식 2" });
@@ -159,7 +166,7 @@ async function build(spec, theme, outFile) {
     const hasSide = !!sl.callout;
     const bw = hasSide ? 7.6 : W - 2 * MARGIN;
     card(s, MARGIN, 1.5, bw, 5.2, CARD, "본문 카드");
-    text(s, bulletRuns(lines, { gap: 12 }), { x: MARGIN + 0.4, y: 1.8, w: bw - 0.8, h: 4.6, fontSize: lines.length > 6 ? 15 : 18, color: TXT, valign: "top", objectName: "글머리표" });
+    text(s, bulletRuns(lines, { gap: 12 }), { x: MARGIN + 0.4, y: 1.8, w: bw - 0.8, h: 4.6, fontSize: bulletSize(lines, hasSide), color: TXT, valign: "top", objectName: "글머리표" });
     if (hasSide) {
       const cx = MARGIN + bw + 0.4, cw = W - MARGIN - cx;
       card(s, cx, 1.5, cw, 5.2, H.dk2, "강조 카드");
@@ -254,7 +261,7 @@ async function build(spec, theme, outFile) {
     const s = openSlide("CONTENT", sl);
     s.addText(sl.title, { placeholder: "title" });
     const rows = (sl.rows || []).slice(0, 3);
-    const y0 = 1.5, avail = 5.2, rg = 0.3;
+    const y0 = 1.5, avail = sl.note ? 4.9 : 5.2, rg = sl.note ? 0.25 : 0.3;   // 비고가 있으면 그 줄만큼 비운다
     const rh = (avail - rg * (rows.length - 1)) / Math.max(rows.length, 1);
     const arrow = await icon("FiArrowRight", H.accent5);
     for (let i = 0; i < rows.length; i++) {
@@ -265,10 +272,14 @@ async function build(spec, theme, outFile) {
       s.addImage({ data: arrow, x: MARGIN + 3.8, y: y + rh / 2 - 0.3, w: 0.6, h: 0.6, objectName: `화살표 ${i + 1}` });
       const rx = MARGIN + 4.6, rw = W - MARGIN - rx;
       card(s, rx, y, rw, rh, CARD_ALT, `비교 오른쪽 ${i + 1}`);
-      circleIcon(s, rx + 0.35, y + 0.3, 0.8, H.accent4, await icon(r.icon || "FiCheckCircle", H.lt1), `비교 아이콘 ${i + 1}`);
-      text(s, sl.toLabel || "개선", { x: rx + 1.4, y: y + 0.25, w: 3, h: 0.3, fontSize: 12, bold: true, color: C.accent4, objectName: `비교 오른쪽 태그 ${i + 1}` });
-      text(s, r.to, { x: rx + 1.4, y: y + 0.55, w: rw - 1.7, h: 0.5, fontSize: 19, bold: true, color: TXT, objectName: `비교 오른쪽 제목 ${i + 1}` });
-      text(s, bulletRuns(r.lines || [], { gap: 4 }), { x: rx + 1.4, y: y + 1.1, w: rw - 1.7, h: rh - 1.3, fontSize: 13, color: TXT, valign: "top", objectName: `비교 오른쪽 내용 ${i + 1}` });
+      // 3줄이면 한 줄 높이가 1.5인치 남짓이라 아이콘·제목·설명을 촘촘히 쌓는다
+      const tight = rh < 2;
+      const d = tight ? 0.7 : 0.8;
+      circleIcon(s, rx + 0.35, y + (tight ? 0.22 : 0.3), d, H.accent4, await icon(r.icon || "FiCheckCircle", H.lt1), `비교 아이콘 ${i + 1}`);
+      text(s, sl.toLabel || "개선", { x: rx + 1.4, y: y + (tight ? 0.16 : 0.25), w: 3, h: 0.28, fontSize: 12, bold: true, color: C.accent4, objectName: `비교 오른쪽 태그 ${i + 1}` });
+      text(s, r.to, { x: rx + 1.4, y: y + (tight ? 0.42 : 0.55), w: rw - 1.7, h: tight ? 0.42 : 0.5, fontSize: tight ? 17 : 19, bold: true, color: TXT, objectName: `비교 오른쪽 제목 ${i + 1}` });
+      const ly = tight ? 0.9 : 1.1;
+      text(s, bulletRuns((r.lines || []).slice(0, tight ? 2 : 4), { gap: tight ? 2 : 4 }), { x: rx + 1.4, y: y + ly, w: rw - 1.7, h: rh - ly - 0.12, fontSize: tight ? 12 : 13, color: TXT, valign: "top", objectName: `비교 오른쪽 내용 ${i + 1}` });
     }
     if (sl.note) text(s, sl.note, { x: MARGIN, y: 6.55, w: 9, h: 0.35, fontSize: 12, italic: true, color: SUB, objectName: "비교 안내" });
     notes(s, sl);
