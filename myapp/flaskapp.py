@@ -1,4 +1,7 @@
 import os
+import threading
+import time
+import uuid
 from flask import Flask, render_template, url_for, flash, redirect, request, send_from_directory, abort, jsonify
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 
@@ -6,8 +9,8 @@ from forms import RegistrationForm, LoginForm
 from flask_bcrypt import Bcrypt
 from database import db
 from models import User
-from utils.gpt_generate import chat_development
-from utils.text_pp import parse_response, create_ppt
+from utils.claude_generate import generate_spec, MODEL as CLAUDE_MODEL, MAX_SLIDES, DENSITY
+from utils.render_pptx import render, list_themes, GENERATED
 from dotenv import load_dotenv
 
 load_dotenv()  # This loads the .env file
@@ -22,6 +25,8 @@ db.init_app(app)
 # Configure Flask-Login
 login_manager = LoginManager()
 login_manager.login_view = "login"
+login_manager.login_message = "로그인이 필요한 화면입니다."
+login_manager.login_message_category = "info"
 login_manager.init_app(app)
 
 
@@ -39,7 +44,7 @@ def home():
 @app.route('/profile')
 @login_required
 def profile():
-    return render_template('profile.html')
+    return render_template('profile.html', title='내 정보')
 
 
 @app.route("/register", methods=['GET', 'POST'])
@@ -51,9 +56,9 @@ def register():
         db.session.add(user)
         db.session.commit()
         login_user(user, remember=True)
-        flash('Your account has been created! You are now able to log in', 'success')
-        return redirect(url_for('login'))
-    return render_template('register.html', title='Register', form=form, user=current_user)
+        flash('가입했습니다. 이제 덱을 만들어 보세요.', 'success')
+        return redirect(url_for('generate'))
+    return render_template('register.html', title='회원가입', form=form, user=current_user)
 
 
 @app.route("/login", methods=['GET', 'POST'])
@@ -69,8 +74,8 @@ def login():
             login_user(user, remember=form.remember.data)
             return redirect(url_for('home'))
         else:
-            flash('Login Unsuccessful. Please check email and password', 'danger')
-    return render_template('login.html', title='Login', form=form, user=current_user)
+            flash('이메일 또는 비밀번호가 맞지 않습니다.', 'danger')
+    return render_template('login.html', title='로그인', form=form, user=current_user)
 
 
 
@@ -81,33 +86,94 @@ def logout():
     return redirect(url_for('login'))
 
 
+# 생성 작업 — 큰 덱은 몇 분 걸리므로 백그라운드 스레드로 돌리고 화면이 /jobs/<id> 로 진행을 묻는다.
+JOBS: dict = {}
+JOBS_LOCK = threading.Lock()
+
+
+def _job_update(job_id, **kw):
+    with JOBS_LOCK:
+        JOBS[job_id].update(kw)
+
+
+def _run_job(job_id, args, theme, date):
+    def progress(stage, done, total):
+        _job_update(job_id, stage=stage, done=done, total=total)
+    try:
+        spec = generate_spec(*args, progress=progress)
+        result = render(spec, theme, date)
+        with app.app_context(), app.test_request_context():
+            _job_update(job_id, state='done', stage='완료', slides=result['slides'],
+                        download=url_for('download_file', filename=result['file']),
+                        spec=url_for('download_file', filename=result['json']))
+    except Exception as e:  # 모델 거절·형식 오류·렌더러 실패를 화면에 그대로 보여 준다
+        app.logger.exception('generate failed')
+        _job_update(job_id, state='error', error=str(e))
+
+
 @app.route('/generator', methods=['GET', 'POST'])
 def generate():
+    """GET: 입력 화면. POST(fetch): 생성 작업을 시작하고 {ok, job} 을 돌려준다."""
     if request.method == 'POST':
-        number_of_slide = request.form.get('number_of_slide')
-        user_text = request.form.get('user_text')
-        template_choice = request.form.get('template_choice')
-        presentation_title = request.form.get('presentation_title')
-        presenter_name = request.form.get('presenter_name')
-        insert_image = 'insert_image' in request.form
+        try:
+            number_of_slide = max(3, min(int(request.form.get('number_of_slide') or 8), MAX_SLIDES))
+        except ValueError:
+            number_of_slide = 8
+        user_text = (request.form.get('user_text') or '').strip()
+        theme = request.form.get('template_choice') or 'climath'
+        presentation_title = (request.form.get('presentation_title') or '').strip() or '발표 자료'
+        presenter_name = (request.form.get('presenter_name') or '').strip()
+        language = (request.form.get('language') or '한국어').strip()
+        density = request.form.get('density') or '보통'
+        date = (request.form.get('date') or '').strip()
+        if not user_text:
+            return jsonify({'ok': False, 'error': '내용을 적어 주세요.'}), 400
+        if theme not in {t['id'] for t in list_themes()}:
+            return jsonify({'ok': False, 'error': f'모르는 테마: {theme}'}), 400
+        if density not in DENSITY:
+            density = '보통'
+        job_id = uuid.uuid4().hex[:12]
+        with JOBS_LOCK:
+            JOBS[job_id] = {'state': 'running', 'stage': '시작', 'done': 0, 'total': number_of_slide, 'started': time.time()}
+        args = (user_text, number_of_slide, presentation_title, presenter_name, language, density)
+        threading.Thread(target=_run_job, args=(job_id, args, theme, date), daemon=True).start()
+        return jsonify({'ok': True, 'job': job_id, 'status': url_for('job_status', job_id=job_id)})
 
-        user_message = f"I want you to come up with the idea for the PowerPoint. The number of slides is {number_of_slide}. " \
-                       f"The content is: {user_text}.The title of content for each slide must be unique, " \
-                       f"and extract the most important keyword within two words for each slide. Summarize the content for each slide. "
+    return render_template('generator.html', title='덱 만들기', themes=list_themes(), model=CLAUDE_MODEL,
+                           max_slides=MAX_SLIDES, densities=list(DENSITY),
+                           today=time.strftime('%Y. %m. %d').replace('. 0', '. '))
 
-        assistant_response = chat_development(user_message)
-        # Check the response (for debug)
-        print(f"Assistant Response:\n{assistant_response}")
-        slides_content = parse_response(assistant_response)
-        create_ppt(slides_content, template_choice, presentation_title, presenter_name, insert_image)
 
-    return render_template('generator.html', title='Generate')
+@app.route('/jobs/<job_id>')
+def job_status(job_id):
+    with JOBS_LOCK:
+        job = dict(JOBS.get(job_id) or {})
+    if not job:
+        return jsonify({'ok': False, 'error': '작업을 찾지 못했습니다. 서버가 다시 시작됐을 수 있습니다.'}), 404
+    job['elapsed'] = int(time.time() - job.pop('started', time.time()))
+    return jsonify({'ok': True, **job})
+
+
+@app.route('/render', methods=['POST'])
+def render_only():
+    """명세 JSON 을 직접 보내 렌더만 한다 (모델 호출 없음). body: {"spec": {...}, "theme": "climath"}"""
+    body = request.get_json(silent=True) or {}
+    spec = body.get('spec')
+    if not isinstance(spec, dict) or not spec.get('slides'):
+        return jsonify({'ok': False, 'error': 'spec.slides 가 필요합니다.'}), 400
+    theme = body.get('theme') or spec.get('theme') or 'climath'
+    try:
+        result = render(spec, theme, body.get('date', ''))
+    except Exception as e:
+        app.logger.exception('render failed')
+        return jsonify({'ok': False, 'error': str(e)}), 500
+    return jsonify({'ok': True, 'download': url_for('download_file', filename=result['file']), 'slides': result['slides']})
 
 
 @app.route('/download/<filename>', methods=['GET'])
 def download_file(filename):
     try:
-        return send_from_directory('generated', filename, as_attachment=True)
+        return send_from_directory(str(GENERATED), filename, as_attachment=True)
 
     except FileNotFoundError:
         abort(404)

@@ -1,0 +1,14 @@
+{
+  "id": "climath",
+  "label": "CLIMATH (차콜 · 인디고 · 라임)",
+  "name": "CLIMATH Deck",
+  "headFontFace": "NanumBarunGothic",
+  "bodyFontFace": "NanumBarunGothic",
+  "colors": {
+    "dk1": "1F2126", "lt1": "FFFFFF", "dk2": "2B2D33", "lt2": "F3F4F8",
+    "accent1": "5B6CF0", "accent2": "B8E986", "accent3": "F2A33A",
+    "accent4": "3DBE8B", "accent5": "8A8D97", "accent6": "E9ECFF",
+    "hlink": "5B6CF0", "folHlink": "8A8D97"
+  },
+  "logo": { "dark": "assets/logo_dark.png", "white": "assets/logo_white.png", "w": 1.35, "h": 0.37 }
+}
