@@ -11,7 +11,7 @@
 
 원본은 GPT-3.5 가 쓴 글을 python-pptx 템플릿의 제목·글머리표 자리에 그대로 채웠다. 이 포크는 생성 핵심을 바꿨다.
 
-1. **Claude 가 장별 구조화 명세(JSON)를 쓴다** — 장마다 유형(표지·목차·섹션·글머리표·카드·숫자 타일·표·두 열·비교·단계·마무리)을 고르고, 구조화 출력(`output_config.format`)으로 형식이 보장된 JSON 을 받는다. `myapp/utils/claude_generate.py`
+1. **Claude 가 장별 구조화 명세(JSON)를 쓴다** — 장마다 유형(표지·목차·섹션·글머리표·카드·숫자 타일·표·두 열·비교·단계·마무리)을 고르고, 형식을 지시문에 적어 JSON 을 받고, 서버가 장 유형별 필수 칸을 검사해 틀리면 한 번 고쳐 쓰게 한다. (구조화 출력은 칸이 많아 API 한도에 걸려 쓰지 않는다.) `myapp/utils/claude_generate.py`
 2. **Node 렌더러가 테마를 입혀 PPTX 를 만든다** — pptxgenjs 로 테마(12색 스킴·글꼴·로고) → 레이아웃(제목 자리·쪽 번호) → 장 유형별 카드·타일·표·차트를 그리고, 테마 색을 파일에 기록해 PowerPoint 의 「디자인 > 색 변형」으로 한 번에 바꿀 수 있게 한다. `renderer/build.js`, 테마 `renderer/themes/*.json`
 3. **렌더로 검사한다** — `renderer/preview.ps1`(Windows, PowerPoint) 이 장마다 PNG 를 뽑아 겹침·넘침을 눈으로 본다.
 

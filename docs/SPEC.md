@@ -1,6 +1,6 @@
 # 덱 명세(JSON) 형식
 
-`renderer/build.js` 가 읽는 입력이다. Claude 가 이 형식으로 써 주고(`myapp/utils/claude_generate.py` 의 `SCHEMA`), 사람이 직접 써서 `/render` 로 보내도 된다. 견본: `renderer/examples/sample-ko.json`.
+`renderer/build.js` 가 읽는 입력이다. Claude 가 이 형식으로 써 주고(`myapp/utils/claude_generate.py` 의 `FORMAT` 지시문, 검사는 `validate_spec`), 사람이 직접 써서 `/render` 로 보내도 된다. 견본: `renderer/examples/sample-ko.json`.
 
 ```json
 {
